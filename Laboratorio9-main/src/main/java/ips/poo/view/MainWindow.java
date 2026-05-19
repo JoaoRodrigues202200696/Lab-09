@@ -5,10 +5,12 @@ import ips.poo.model.Request;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 
 import javax.swing.*;
 import java.util.List;
@@ -25,7 +27,7 @@ public class MainWindow extends BorderPane
 
         MenuBar menuBar = new MenuBar();
         Menu menuFile = new Menu("File");
-        Menu ajuda = new Menu("Ajuda");
+        Button ajuda = new Button("Ajuda");
 
         MenuItem button1 = new MenuItem("New File");
 
@@ -33,8 +35,9 @@ public class MainWindow extends BorderPane
 
         menuFile.getItems().add(button1);
         menuFile.getItems().add(button2);
-        menuBar.getMenus().addAll(menuFile, ajuda);
-        barraTopo.getChildren().add(menuBar);
+        menuBar.getMenus().addAll(menuFile);
+
+        barraTopo.getChildren().addAll(menuBar, ajuda);
 
         //CENTRO
 
@@ -70,11 +73,31 @@ public class MainWindow extends BorderPane
                 new Equipment("Impressora", "Hardware"),
                 new Equipment("Rede Wi-fi", "Rede"),
                 new Equipment("Moodle", "Software"),
-                new Equipment("Email Institutional", "Software")
-
+                new Equipment("Email Institutional", "Software"),
+                new Equipment("Other Equipment", "Other")
         );
         comboBox1.getItems().addAll(equipamentosList);
-        equipamentos.getChildren().addAll(label1, comboBox1);
+        TextField textFieldSecreto = new TextField();
+        textFieldSecreto.setVisible(false);
+
+        comboBox1.setOnAction(e ->
+        {
+            Equipment selected = comboBox1.getValue();
+
+            if (selected != null && selected.getName().equals("Other Equipment")) {
+                textFieldSecreto.setVisible(true);
+            }
+            else
+            {
+                textFieldSecreto.setVisible(false);
+            }
+        });
+        textFieldSecreto.setOnAction(event ->
+        {
+            Equipment newEquipment = new Equipment(textFieldSecreto.getText(), "Other");
+            equipamentosList.add(newEquipment);
+        });
+        equipamentos.getChildren().addAll(label1, comboBox1, textFieldSecreto);
         TitledPane painel2 = new TitledPane("Equipamento /Serviço", equipamentos);
         painel2.setCollapsible(false);
 
@@ -116,26 +139,51 @@ public class MainWindow extends BorderPane
         {
             RadioButton selecionado = (RadioButton) toggleGroup.getSelectedToggle();
             String texto = selecionado.getText();
+            String textoCombo;
+            if(textFieldSecreto.isVisible())
+            {
+                textoCombo = textFieldSecreto.getText();
 
-            CriarRequest(texto, textField1.getText(), comboBox1.getValue(), textArea1.getText() );
+            }
+            else
+            {
+                textoCombo = comboBox1.getValue().toString();
+
+            }
+            CriarRequest(texto, textField1.getText(), new Equipment(textoCombo, "Other"), textArea1.getText() );
         }
         );
 
         Button limpar = new Button("Limpar");
         limpar.setOnAction(e->{
-        limpar(toggleGroup, textField1, comboBox1, textArea1);
+        limpar(toggleGroup, textField1, comboBox1, textArea1, textFieldSecreto);
         });
         Button cancelar = new Button("Cancelar");
         fundo.getChildren().addAll(registar, limpar, cancelar);
 
         setBottom(fundo);
 
-        button1.setOnAction(e->{
-            limpar(toggleGroup, textField1, comboBox1, textArea1);
+        button1.setOnAction(e->
+        {
+            limpar(toggleGroup, textField1, comboBox1, textArea1, textFieldSecreto);
         });
 
         button2.setOnAction(e->{
             Platform.exit();
+        });
+
+        ajuda.setOnAction(e->{
+            Stage helpStage = new Stage();
+            VBox root = new VBox();
+            root.setPadding(new Insets(10));
+            root.setSpacing(5);
+            Label labelAjuda = new Label("Precisa de ajuda ?");
+            root.getChildren().addAll(labelAjuda);
+            Scene scene = new Scene(root, 300, 200);
+
+            helpStage.setTitle("Ajuda");
+            helpStage.setScene(scene);
+            helpStage.show();
         });
 
     }
@@ -146,11 +194,13 @@ public class MainWindow extends BorderPane
         Request request = new Request(userType, name, equipment, description);
     }
 
-    public void limpar(ToggleGroup toggleGroup, TextField textField1, ComboBox<Equipment> comboBox1, TextArea textArea1 )
+    public void limpar(ToggleGroup toggleGroup, TextField textField1, ComboBox<Equipment> comboBox1, TextArea textArea1, TextField textFieldSecreto)
     {
         toggleGroup.selectToggle(null);
         textField1.clear();
         comboBox1.setValue(null);
         textArea1.clear();
+        textFieldSecreto.clear();
+        textFieldSecreto.setVisible(false);
     }
 }
